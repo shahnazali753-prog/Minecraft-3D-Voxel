@@ -1,0 +1,11 @@
+{
+  "name": "BlockWorld",
+  "short_name": "BlockWorld",
+  "description": "A 3D voxel sandbox game for the browser.",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0b1430",
+  "theme_color": "#2f7fe0",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

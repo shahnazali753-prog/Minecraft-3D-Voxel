@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="BlockWorld" />
+  <meta name="theme-color" content="#2f7fe0" />
+  <meta name="description" content="BlockWorld - a 3D voxel sandbox game you can play in your browser." />
+  <title>BlockWorld</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="game">
+    <canvas id="canvas"></canvas>
+    <div id="underwater"></div>
+
+    <div id="hud" class="hidden">
+      <div id="crosshair"></div>
+      <div id="break-ring"></div>
+      <div id="info" class="hidden"></div>
+      <div id="toast"></div>
+      <div id="mode-badge"></div>
+
+      <div id="hotbar-wrap">
+        <div id="hotbar"></div>
+        <div id="inv-btn" class="hud-btn" data-btn="inventory" title="Inventory (E)">&#9638;</div>
+      </div>
+
+      <div id="pause-btn" class="hud-btn" data-btn="pause" title="Pause (Esc)">&#10073;&#10073;</div>
+
+      <!-- touch only -->
+      <div id="touch-ui">
+        <div class="joy-base"><div class="joy-knob"></div></div>
+        <div class="joy-hint">MOVE</div>
+        <div id="action-btns">
+          <div class="tbtn" data-btn="break" id="btn-break"><span>&#9935;</span><small>Break</small></div>
+          <div class="tbtn" data-btn="place" id="btn-place"><span>&#9635;</span><small>Place</small></div>
+          <div class="tbtn big" data-btn="jump" id="btn-jump"><span>&#9650;</span><small>Jump</small></div>
+          <div class="tbtn" data-btn="down" id="btn-down"><span>&#9660;</span><small>Down</small></div>
+          <div class="tbtn" data-btn="fly" id="btn-fly"><span>&#10022;</span><small>Fly</small></div>
+        </div>
+      </div>
+
+      <div id="click-to-play" class="hidden">Click to play<br /><small>WASD move &middot; Space jump &middot; Mouse look &middot; Left break &middot; Right place &middot; E inventory &middot; Esc pause</small></div>
+    </div>
+  </div>
+
+  <!-- MENUS -->
+  <div id="menus">
+    <section id="menu-title" class="menu">
+      <h1 class="logo"><span>BLOCK</span><span>WORLD</span></h1>
+      <p class="tagline">Build anything. Explore everywhere.</p>
+      <div class="menu-buttons">
+        <button class="btn primary" data-action="play">&#9654; Play</button>
+        <button class="btn" data-action="create">&#10010; Create World</button>
+        <button class="btn" data-action="settings">&#9881; Settings</button>
+      </div>
+      <p class="footer">Saved in this browser &middot; v1.0</p>
+    </section>
+
+    <section id="menu-worlds" class="menu hidden">
+      <h2>Select World</h2>
+      <div id="world-list" class="panel list"></div>
+      <div class="row">
+        <button class="btn" data-action="create">&#10010; Create New</button>
+        <button class="btn" data-action="back">Back</button>
+      </div>
+    </section>
+
+    <section id="menu-create" class="menu hidden">
+      <h2>Create World</h2>
+      <form id="create-form" class="panel form" autocomplete="off">
+        <label>World name<input name="name" maxlength="32" value="My World" /></label>
+        <label>Seed <small>(optional)</small><input name="seed" maxlength="32" placeholder="random" /></label>
+        <div class="label">Game mode</div>
+        <div class="segmented">
+          <label><input type="radio" name="mode" value="creative" checked /><span>Creative<small>Unlimited blocks &middot; Fly</small></span></label>
+          <label><input type="radio" name="mode" value="survival" /><span>Survival<small>Collect what you mine</small></span></label>
+        </div>
+        <div class="row">
+          <button class="btn primary" type="submit">Create &amp; Play</button>
+          <button class="btn" type="button" data-action="back">Cancel</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="menu-settings" class="menu hidden">
+      <h2>Settings</h2>
+      <form id="settings-form" class="panel form" autocomplete="off">
+        <label>Render distance <output data-for="renderDistance"></output>
+          <input type="range" name="renderDistance" min="2" max="8" step="1" /></label>
+        <label>Look sensitivity <output data-for="sensitivity"></output>
+          <input type="range" name="sensitivity" min="0.2" max="3" step="0.1" /></label>
+        <label>Field of view <output data-for="fov"></output>
+          <input type="range" name="fov" min="55" max="100" step="1" /></label>
+        <label>Day length (seconds) <output data-for="dayLength"></output>
+          <input type="range" name="dayLength" min="120" max="1800" step="60" /></label>
+        <label>Graphics quality
+          <select name="quality">
+            <option value="low">Low (fastest)</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select></label>
+        <div class="toggles">
+          <label class="toggle"><input type="checkbox" name="clouds" /><span>Clouds</span></label>
+          <label class="toggle"><input type="checkbox" name="autoJump" /><span>Auto-jump</span></label>
+          <label class="toggle"><input type="checkbox" name="viewBob" /><span>View bobbing</span></label>
+          <label class="toggle"><input type="checkbox" name="sound" /><span>Sound</span></label>
+          <label class="toggle"><input type="checkbox" name="showFps" /><span>Show FPS</span></label>
+          <label class="toggle"><input type="checkbox" name="invertY" /><span>Invert look</span></label>
+        </div>
+        <div class="row">
+          <button class="btn primary" type="button" data-action="back">Done</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="menu-pause" class="menu hidden">
+      <h2>Paused</h2>
+      <div class="menu-buttons">
+        <button class="btn primary" data-action="resume">Resume</button>
+        <button class="btn" data-action="settings">&#9881; Settings</button>
+        <button class="btn" data-action="save">&#128190; Save World</button>
+        <button class="btn" data-action="quit">Save &amp; Quit to Title</button>
+      </div>
+      <p id="pause-info" class="footer"></p>
+    </section>
+
+    <section id="menu-inventory" class="menu hidden">
+      <h2>Blocks</h2>
+      <p class="hint">Tap a block to put it in the selected hotbar slot</p>
+      <div id="inventory-grid" class="panel"></div>
+      <div class="row"><button class="btn primary" data-action="resume">Done</button></div>
+    </section>
+
+    <section id="menu-loading" class="menu hidden">
+      <h1 class="logo small"><span>BLOCK</span><span>WORLD</span></h1>
+      <p id="loading-text">Generating world&hellip;</p>
+      <div class="progress"><div id="loading-bar"></div></div>
+    </section>
+  </div>
+
+  <noscript>BlockWorld needs JavaScript enabled.</noscript>
+  <div id="boot-error" class="hidden"></div>
+  <script>
+    // Surface fatal errors on screen (handy when testing on a phone)
+    window.addEventListener('error', function (e) {
+      var el = document.getElementById('boot-error');
+      el.textContent = 'Error: ' + (e.message || e) ;
+      el.classList.remove('hidden');
+    });
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
